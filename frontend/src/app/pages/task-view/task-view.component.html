@@ -8,10 +8,7 @@
 
       <div class="list-menu">
 
-        <a class="list-menu-item is-active">
-          List #2
-        </a>
-        <a class="list-menu-item" *ngFor="let list of lists" [routerLink]="['/lists', list._id]">
+        <a class="list-menu-item" *ngFor="let list of lists" [routerLink]="['/lists', list._id]" routerLinkActive="is-active">
           {{list.title}}
         </a>
         
@@ -24,21 +21,9 @@
       <h1 class="title has-text-primary">
         Tasks
       </h1>
-      <!-- tasks -->
-      <div class="task">
-        <p>This is something i have to do</p>
-      </div>
 
-      <div class="task complete">
-        <p>This is something i have to do</p>
-      </div>
-
-      <div class="task">
-        <p>This is something i have to do</p>
-      </div>
-
-      <div class="task">
-        <p>This is something i have to do</p>
+      <div class="task" *ngFor="let task of tasks">
+        <p>{{task.title}}</p>
       </div>
       
     </div>
