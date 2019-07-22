@@ -7,21 +7,17 @@
       </h1>
 
       <div class="list-menu">
-        <a class="list-menu-item">
-          List #1
-        </a>
 
         <a class="list-menu-item is-active">
           List #2
         </a>
-
-        <a class="list-menu-item">
-          List #3
+        <a class="list-menu-item" *ngFor="let list of lists" [routerLink]="['/lists', list._id]">
+          {{list.title}}
         </a>
         
       </div>
       
-      <button class="button is-primary has-text-white" (click)="createNewList()">+ New List</button>
+      <button class="button is-primary has-text-white" routerLink="/new-list">+ New List</button>
     </div>
 
     <div class="task-list-container has-background-light">
