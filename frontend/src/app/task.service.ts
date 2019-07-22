@@ -1,9 +1,14 @@
 import { Injectable } from '@angular/core';
 
+import { WebRequestService } from './web-request.service';
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TaskService {
+  constructor(private webReqService: WebRequestService) {}
 
-  constructor() { }
+  createList(title: string) {
+    return this.webReqService.post('lists', { title });
+  }
 }
