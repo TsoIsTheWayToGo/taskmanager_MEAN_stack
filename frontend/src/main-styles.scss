@@ -26,8 +26,16 @@ $input-shadow: none;
 
 html {
     background: linear-gradient(to right top, $turquoise, $green);
-}
 
+}
+body {
+    position: absolute;
+    margin: 0px;
+    overflow: hidden;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+}
 html, body {
     height: 100%;
 }
@@ -49,7 +57,14 @@ html, body {
     max-width: 350px;
     
 }
+.title-name {
 
+  font-family: "Lato";
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+
+}
 .title {
   font-family: "Lato";
   font-size: 28px;
