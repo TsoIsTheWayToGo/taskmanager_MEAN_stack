@@ -240,7 +240,7 @@ app.delete('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
 
 				return true;
 			}
-			
+
 			return false;
 		})
 		.then(canDeleteTasks => {
@@ -333,9 +333,9 @@ app.post('/users/login', (req, res) => {
 
 // GET /users/me/access-token
 // Purpose: generates and returns an access token
-
+// for post man testing purposes
 app.get('/users/me/access-token', verifySession, (req, res) => {
-    // we know that the user/caller is authenticated and we have the user_id and user object available to us
+  
     req.userObject.generateAccessAuthToken().then((accessToken) => {
         res.header('x-access-token', accessToken).send({ accessToken });
     }).catch((e) => {
