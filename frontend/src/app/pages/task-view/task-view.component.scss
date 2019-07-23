@@ -28,13 +28,7 @@
    border-radius: 0px 8px 8px 0px;
 }
 
-.title {
-  font-family: "Lato";
-  font-size: 28px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
 
-}
 
 .list-menu {
   display: flex;
@@ -81,7 +75,7 @@
         box-shadow: 0 0 0 5px #eeeeee;
       }
   }
-  &.complete {
+  &.completed {
     text-decoration: line-through;
     opacity: 0.8;
   }
