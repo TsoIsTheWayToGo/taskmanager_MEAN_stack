@@ -11,6 +11,23 @@ const jwt = require('jsonwebtoken');
 //load middleware
 app.use(bodyParser.json());
 
+let authenticate = (req, res, next) => {
+	let token = req.header('x-access-token');
+
+	// verify the JWT
+	jwt.verify(token, User.getJWTSecret(), (err, decoded) => {
+		if (err) {
+			// there was an error
+			// jwt is invalid - * DO NOT AUTHENTICATE *
+			res.status(401).send(err);
+		} else {
+			// jwt is valid
+			req.user_id = decoded._id;
+			next();
+		}
+	});
+};
+
 // Verify Refresh Token Middleware
 let verifySession = (req, res, next) => {
 
@@ -74,21 +91,31 @@ app.use(function(req, res, next) {
 
 //GET /lists
 //Purpose: Get all List
-app.get('/lists', (req, res) => {
-	// want to return an array of all the list in the db
-	List.find({}).then(lists => {
-		res.send(lists);
-	});
+app.get('/lists', authenticate, (req, res) => {
+
+	List.find({
+		_userId: req.user_id,
+	})
+		.then(lists => {
+			res.send(lists);
+		})
+		.catch(e => {
+			res.send(e);
+		});
 });
 
 //POST /lists
 //Purpose: Create a new list
-app.post('/lists', (req, res) => {
+app.post('/lists', authenticate, (req, res) => {
+
 	let title = req.body.title;
+
 	let newList = new List({
 		title,
+		_userId: req.user_id,
 	});
 	newList.save().then(listDoc => {
+
 		res.send(listDoc);
 	});
 });
@@ -96,29 +123,37 @@ app.post('/lists', (req, res) => {
 //PATCH /lists/:id
 //Purpose: Update/edit a list
 
-app.patch('/lists/:id', (req, res) => {
+app.patch('/lists/:id', authenticate, (req, res) => {
+
 	List.findOneAndUpdate(
-		{ _id: req.params.id },
+		{ _id: req.params.id, _userId: req.user_id },
 		{
 			$set: req.body,
 		}
 	).then(() => {
-		res.sendStatus(200);
+		res.send({ message: 'updated successfully' });
 	});
 });
 
 //DELETE /lists/:id
 //Purpose: Delete a list
 
-app.delete('/lists/:id', (req, res) => {
-	List.findOneAndRemove({ _id: req.params.id }).then(removedListDoc => {
+app.delete('/lists/:id', authenticate, (req, res) => {
+	
+	List.findOneAndRemove({
+		_id: req.params.id,
+		_userId: req.user_id,
+	}).then(removedListDoc => {
 		res.send(removedListDoc);
+
+		deleteTasksFromList(removedListDoc._id);
 	});
 });
 
 //GET /lists/:listId/tasks
 //Purpose: Get all task in a specific list
-app.get('/lists/:listId/tasks', (req, res) => {
+app.get('/lists/:listId/tasks', authenticate, (req, res) => {
+	
 	Task.find({
 		_listId: req.params.listId,
 	}).then(tasks => {
@@ -128,37 +163,100 @@ app.get('/lists/:listId/tasks', (req, res) => {
 
 //POST /lists/:listId/tasks
 //Purpose: Get all task in a specific list
-app.post('/lists/:listId/tasks', (req, res) => {
-	let newTask = new Task({
-		title: req.body.title,
-		_listId: req.params.listId,
-	});
-	newTask.save().then(newTaskDoc => {
-		res.send(newTaskDoc);
-	});
+app.post('/lists/:listId/tasks', authenticate, (req, res) => {
+
+	List.findOne({
+		_id: req.params.listId,
+		_userId: req.user_id,
+	})
+		.then(list => {
+			if (list) {
+
+				return true;
+			}
+
+			return false;
+		})
+		.then(canCreateTask => {
+			if (canCreateTask) {
+				let newTask = new Task({
+					title: req.body.title,
+					_listId: req.params.listId,
+				});
+				newTask.save().then(newTaskDoc => {
+					res.send(newTaskDoc);
+				});
+			} else {
+				res.sendStatus(404);
+			}
+		});
 });
 
 //PATCH /lists/:listId/tasks/:id
 //Purpose: find and update a task
+app.patch('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
 
-app.patch('/lists/:listId/tasks/:taskId', (req, res) => {
-	Task.findOneAndUpdate(
-		{ _id: req.params.taskId },
-		{
-			$set: req.body,
-		}
-	).then(() => {
-		res.send({message: 'Updated Successfully'});
-	});
+	List.findOne({
+		_id: req.params.listId,
+		_userId: req.user_id,
+	})
+		.then(list => {
+			if (list) {
+
+				return true;
+			}
+
+			return false;
+		})
+		.then(canUpdateTasks => {
+			if (canUpdateTasks) {
+
+				Task.findOneAndUpdate(
+					{
+						_id: req.params.taskId,
+						_listId: req.params.listId,
+					},
+					{
+						$set: req.body,
+					}
+				).then(() => {
+					res.send({ message: 'Updated successfully.' });
+				});
+			} else {
+				res.sendStatus(404);
+			}
+		});
 });
 
 //DELETE /lists/:listId/tasks/:taskId
 //Purpose: find and delete a task
-app.delete('/lists/:listId/tasks/:taskId', (req, res) => {
-	Task.findOneAndRemove({ _id: req.params.taskId }).then(removedTask => {
-		res.send(removedTask);
-	});
+app.delete('/lists/:listId/tasks/:taskId', authenticate, (req, res) => {
+	List.findOne({
+		_id: req.params.listId,
+		_userId: req.user_id,
+	})
+		.then(list => {
+			if (list) {
+
+				return true;
+			}
+			
+			return false;
+		})
+		.then(canDeleteTasks => {
+			if (canDeleteTasks) {
+				Task.findOneAndRemove({
+					_id: req.params.taskId,
+					_listId: req.params.listId,
+				}).then(removedTaskDoc => {
+					res.send(removedTaskDoc);
+				});
+			} else {
+				res.sendStatus(404);
+			}
+		});
 });
+
 
 //GET /lists/:listId/tasks/:taskId
 //Purpose: find one task (not needed)
@@ -244,3 +342,15 @@ app.get('/users/me/access-token', verifySession, (req, res) => {
         res.status(400).send(e);
     });
 })
+
+
+
+//helper methods
+
+let deleteTasksFromList = _listId => {
+	Task.deleteMany({
+		_listId,
+	}).then(() => {
+		console.log('Tasks from ' + _listId + ' were deleted!');
+	});
+};
